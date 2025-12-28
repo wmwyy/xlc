@@ -3,106 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>闸孔净宽计算器 · 在线版</title>
+  <title>闸孔净宽计算器 - 项目说明</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="hero">
-    <div>
-      <div class="eyebrow">C# / WPF 公式搬运 · 网页端便捷试算</div>
-      <h1>闸孔净宽计算器（A.0.1 ~ A.0.3）</h1>
-      <p>按附录 A 公式计算平底闸门 A.0.1、高底闸门 A.0.2、潜没闸门 A.0.3，并展示中间参数。</p>
-      <div class="hero-actions">
-        <button class="primary" id="fill-all">一键填充示例</button>
-        <a class="ghost" href="https://github.com/wmwyy/zkjk" target="_blank" rel="noreferrer">查看源码</a>
-      </div>
-      <div class="note">提示：此页面纯前端计算，公式与桌面应用一致；不依赖后端。</div>
-    </div>
+  <header>
+    <div class="title">闸孔净宽计算器（A.0.1~A.0.3）</div>
+    <div class="subtitle">C# / WPF 桌面应用 · 按附录 A 公式计算闸孔净宽</div>
   </header>
 
-  <main class="layout">
-    <section class="panel">
-      <div class="tab-bar" role="tablist">
-        <button class="tab active" data-tab="a01" aria-selected="true">平底闸门 A.0.1</button>
-        <button class="tab" data-tab="a02" aria-selected="false">高底闸门 A.0.2</button>
-        <button class="tab" data-tab="a03" aria-selected="false">潜没闸门 A.0.3</button>
-      </div>
+  <section class="panel">
+    <h2>概览</h2>
+    <p>本工具包含三个典型工况：平底闸门 A.0.1、高底闸门 A.0.2、潜没闸门 A.0.3；界面多标签页，支持示例一键填充，实时显示中间参数。</p>
+  </section>
 
-      <div class="tab-content" id="tab-a01">
-        <div class="form-grid">
-          <label>Q (过闸流量 m³/s)<input type="number" step="0.001" id="a01-q" /></label>
-          <label>H0 (堰上水深 m)<input type="number" step="0.001" id="a01-h0" /></label>
-          <label>H (闸前水深 m)<input type="number" step="0.001" id="a01-h" /></label>
-          <label>h1 (闸堰埋没深 m)<input type="number" step="0.001" id="a01-h1" /></label>
-          <label>b0 (单孔净宽 m)<input type="number" step="0.001" id="a01-b0" /></label>
-          <label>b1 (上游半水深宽度 m)<input type="number" step="0.001" id="a01-b1" /></label>
-          <label>N (孔数)<input type="number" step="1" id="a01-n" /></label>
-          <label>d_c (中间墩厚 m)<input type="number" step="0.001" id="a01-dc" /></label>
-          <label>d_b (边墩厚 m)<input type="number" step="0.001" id="a01-db" /></label>
-          <label>m (堰流系数，默认0.885)<input type="number" step="0.0001" id="a01-m" /></label>
-          <label>g (重力加速度，默认9.81)<input type="number" step="0.0001" id="a01-g" /></label>
-          <label class="inline"><input type="checkbox" id="a01-single" checked /> 单孔计算</label>
-        </div>
-        <div class="actions">
-          <button class="ghost" data-fill="a01">填充示例</button>
-          <button class="primary" data-run="a01">计算</button>
-          <span class="hint">公式：B0 = Q / (sigma * epsilon * m * sqrt(2*g) * H^(3/2))</span>
-        </div>
-        <div class="result" id="a01-result"></div>
-      </div>
-
-      <div class="tab-content hidden" id="tab-a02">
-        <div class="form-grid">
-          <label>Q (过闸流量 m³/s)<input type="number" step="0.001" id="a02-q" /></label>
-          <label>H0 (堰上水深 m)<input type="number" step="0.001" id="a02-h0" /></label>
-          <label>h0 (底槛高程 m)<input type="number" step="0.001" id="a02-h0b" /></label>
-          <label>h_s (下游水深 m)<input type="number" step="0.001" id="a02-hs" /></label>
-          <label>σ (流态系数，可选)<input type="number" step="0.0001" id="a02-sigma" /></label>
-          <label>g (重力加速度，默认9.81)<input type="number" step="0.0001" id="a02-g" /></label>
-        </div>
-        <div class="actions">
-          <button class="ghost" data-fill="a02">填充示例</button>
-          <button class="primary" data-run="a02">计算</button>
-          <span class="hint">公式：B0 = Q / (sigma * mu0 * sqrt(2*g*(H0-h0)))</span>
-        </div>
-        <div class="result" id="a02-result"></div>
-      </div>
-
-      <div class="tab-content hidden" id="tab-a03">
-        <div class="form-grid">
-          <label>Q (过闸流量 m³/s)<input type="number" step="0.001" id="a03-q" /></label>
-          <label>H0 (堰上水深 m)<input type="number" step="0.001" id="a03-h0" /></label>
-          <label>H (闸前水深 m)<input type="number" step="0.001" id="a03-h" /></label>
-          <label>h_e (孔口高程 m)<input type="number" step="0.001" id="a03-he" /></label>
-          <label>h_c (胸墙底圆弧半径或基准 m)<input type="number" step="0.001" id="a03-hc" /></label>
-          <label>ε_c (侧收缩系数)<input type="number" step="0.0001" id="a03-ec" /></label>
-          <label>φ (孔流流速系数，0.95~1.0)<input type="number" step="0.0001" id="a03-phi" /></label>
-          <label>g (重力加速度，默认9.81)<input type="number" step="0.0001" id="a03-g" /></label>
-        </div>
-        <div class="actions">
-          <button class="ghost" data-fill="a03">填充示例</button>
-          <button class="primary" data-run="a03">计算</button>
-          <span class="hint">公式：B0 = Q / (sigma' * mu * he * sqrt(2*g*H0))</span>
-        </div>
-        <div class="result" id="a03-result"></div>
-      </div>
-    </section>
-
-    <section class="panel light">
-      <h2>使用提示</h2>
+  <section class="panel grid">
+    <div>
+      <h3>主要功能</h3>
       <ul>
-        <li>输入单位按米、秒、立方米每秒，和桌面版一致。</li>
-        <li>A.0.3 的 σ' 采用表内线性插值，超界自动取端点。</li>
-        <li>示例值与 README/桌面版一致，可直接点击“填充示例”。</li>
+        <li>输入参数与国标附录 A 公式一致，系数可自定义。</li>
+        <li>中间参数实时计算：sigma、epsilon、mu0、mu、epsilon'、lambda、sigma'。</li>
+        <li>内置表 A.0.3 插值，超界自动取端点。</li>
+        <li>示例按钮：一键填入 README 中的示例值。</li>
       </ul>
-    </section>
-  </main>
+    </div>
+    <div>
+      <h3>运行/构建</h3>
+      <ol>
+        <li>安装 .NET 8 SDK。</li>
+        <li>在仓库根目录执行：<code>dotnet run --project GateCalculator</code></li>
+        <li>构建：<code>dotnet build GateCalculator</code></li>
+      </ol>
+      <p class="note">这是桌面应用，GitHub Pages 仅用于展示说明与下载链接，不提供在线运行。</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>文件与结构</h2>
+    <ul>
+      <li><strong>GateCalculator/MainWindow.xaml(.cs)</strong>：UI 布局、示例填充、简图显示与缩放。</li>
+      <li><strong>GateCalculator/Services/Calculators.cs</strong>：三种工况计算公式与插值表。</li>
+      <li><strong>Assets/A01.png, A02.png, A03.png</strong>：三种工况示意图，支持界面右侧显示与缩放。</li>
+      <li><strong>README.md</strong>：公式、示例值、运行说明。</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>使用步骤（桌面端）</h2>
+    <ol>
+      <li>确保已安装 .NET 8 SDK。</li>
+      <li>克隆仓库：<code>git clone https://github.com/wmwyy/zkjk.git</code></li>
+      <li>运行应用：<code>dotnet run --project GateCalculator</code></li>
+      <li>在界面选择工况、可先点击“填充示例”，再修改参数后计算。</li>
+      <li>右侧可查看对应工况的示意图，使用滑杆缩放。</li>
+    </ol>
+  </section>
+
+  <section class="panel">
+    <h2>示意图</h2>
+    <div class="gallery">
+      <figure>
+        <img src="../GateCalculator/Assets/A01.png" alt="A.0.1" />
+        <figcaption>A.0.1 平底闸门</figcaption>
+      </figure>
+      <figure>
+        <img src="../GateCalculator/Assets/A02.png" alt="A.0.2" />
+        <figcaption>A.0.2 高底闸门</figcaption>
+      </figure>
+      <figure>
+        <img src="../GateCalculator/Assets/A03.png" alt="A.0.3" />
+        <figcaption>A.0.3 潜没闸门</figcaption>
+      </figure>
+    </div>
+    <p class="note">若图片未显示，请确保仓库中的 Assets 目录已包含对应 PNG 文件。</p>
+  </section>
 
   <footer>
-    <div>开源仓库：<a href="https://github.com/wmwyy/zkjk" target="_blank" rel="noreferrer">github.com/wmwyy/zkjk</a></div>
-    <div class="note">前端仅做即时计算，不替代线下审核；如与现场不符，请以规范/实测为准。</div>
+    <p>仓库：<a href="https://github.com/wmwyy/zkjk" target="_blank" rel="noreferrer">github.com/wmwyy/zkjk</a></p>
   </footer>
-
-  <script src="app.js"></script>
 </body>
 </html>
