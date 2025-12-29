@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+
+# Output files
+*.log
+*.docx
+
+# Backup files
+*_OLD.md
+*.bak
+
+# .NET
+[Bb]in/
+[Oo]bj/

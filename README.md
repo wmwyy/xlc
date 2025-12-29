@@ -1,37 +1,158 @@
-# 闸孔净宽计算器（C# / WPF）
+﻿# 闸孔净宽与消力池计算器
 
-桌面端窗口化工具，按附录 A 公式 A.0.1（平底闸门）、A.0.2（高底闸门）、A.0.3（潜没闸门）计算闸孔总净宽，并显示中间参数。
+ 基于规范附录A和附录B的水工计算在线工具
 
-## 运行
-1. 需要 .NET 8 SDK。 
-2. 在当前目录执行：
-   - 构建：`dotnet build GateCalculator`  
-   - 运行：`dotnet run --project GateCalculator`
+## 功能特性
 
-## 功能要点
-- 三个标签页对应 A.0.1 / A.0.2 / A.0.3。
-- 输入量为图示公式中的参数，系数 g、m、phi 提供默认值，可手动改。
-- 实时展示中间结果：sigma、epsilon、mu0、mu、epsilon'、lambda、sigma' 等。
-- 表 A.0.3 的 d'（sigma'）内置插值，按 (he - hc)/(H - hc) 线性插值，超界取端点值。
+-  **A.0.1 平底闸闻**：计算平底闸闻净宽
+-  **A.0.2 高底闸闻**：计算高底闸闻净宽
+-  **A.0.3 潜没闸闻**：计算潜没闸闻净宽
+-  **消力池计算**：基于附录B.1规范
+-  **实时计算**：输入参数后即时获取结果
+-  **美观界面**：现代化的 Web 界面
+-  **多版本**：Streamlit Web版、tkinter桌面版、C# WPF版
 
-## 主要计算公式
-- A.0.1：`B0 = Q / (sigma * epsilon * m * sqrt(2*g) * H^(3/2))`，sigma 由 `2.31*(h1/H0*(1-h1/H0))^0.4` 计算，epsilon 按单孔或多孔公式求。
-- A.0.2：`B0 = Q / (sigma * mu0 * sqrt(2*g*(H0-h0)))`，`mu0 = 0.877 + (hs/H0 - 0.65)^2`。
-- A.0.3：`B0 = Q / (sigma' * mu * he * sqrt(2*g*H0))`，`mu = phi * exp(epsilon') / sqrt(1 - epsilon' * he/H)`，`epsilon' = 1 / (1 + sqrt(lambda * (1 - (he/H)^2)))`，`lambda = 0.4 / e^(ln(6*epsilon_c)^2)`。
+## 在线访问
 
-## 示例与计算简图
-- A.0.1 示例：Q=120 m³/s, H0=8 m, H=10 m, h1=5 m, b0=3 m, b1=3.5 m, N=1, m=0.885, g=9.81 ⇒ sigma≈1.2929, epsilon≈0.9774, B0≈0.7660 m。
-- A.0.2 示例：Q=150 m³/s, H0=8 m, h0=2 m, hs=5 m, sigma=0.82, g=9.81 ⇒ mu0≈0.8776, B0≈19.2107 m。
-- A.0.3 示例：Q=180 m³/s, H0=9 m, H=10 m, he=4 m, hc=1.5 m, epsilon_c=0.2, phi=0.96, g=9.81 ⇒ ratio≈0.2941, sigma'≈0.1565, lambda≈0.3869, epsilon'≈0.6369, mu≈2.1025, B0≈10.2940 m。
-- 计算简图（A.0.3）：
-```
-   水面
-   |<--H0-->|
-   |--------| he
-   |--hc--|
-   |<----H---->|
-   基床
-```
-## 注意
-- 请确保输入单位与公式一致（米、立方米每秒）。
-- 对表述或符号有不同习惯时，可直接修改 UI 文本或计算公式对应代码。
+-  **Streamlit版**：部署后可用
+
+## 本地部署
+
+### 环境要求
+
+- Python 3.8+
+- pip
+
+### 安装步骤
+
+1. **克隆仓库**
+\\\ash
+git clone https://github.com/wmwyy/xlc.git
+cd xlc
+\\\
+
+2. **安装依赖**
+\\\ash
+pip install -r requirements.txt
+\\\
+
+3. **运行 Streamlit Web 版**
+\\\ash
+streamlit run app.py
+\\\
+
+应用将在浏览器中自动打开，默认地址：http://localhost:8501
+
+4. **运行消力池桌面版**（可选）
+\\\ash
+python energy_basin.py
+\\\
+
+## 使用说明
+
+### Streamlit Web 版
+
+1. 访问应用网址或本地运行
+2. 选择计算类型标签页：
+   - **A.0.1 平底闸闻**
+   - **A.0.2 高底闸闻**
+   - **A.0.3 潜没闸闻**
+   - **消力池计算**
+3. 输入相关参数
+4. 点击"计算"按钮
+5. 查看详细结果和中间参数
+
+## 计算公式
+
+### A.0.1 平底闸闻
+
+\\\
+B = Q / (σ  ε  m  (2g)  H^(3/2))
+σ = 2.31  (h/H  (1 - h/H))^0.4
+ε = b / (b + 20.1h)  [单孔]
+ε = (Nb) / (Nb + 20.1h + (N-1)b)  [多孔]
+\\\
+
+### A.0.2 高底闸闻
+
+\\\
+B = Q / (σ  μ  (2g(H-h)))
+μ = 0.877 + (h/H - 0.65)
+\\\
+
+### A.0.3 潜没闸闻
+
+\\\
+B = Q / (σ'  μ  hₑ  (2gH))
+μ = φ  exp(ε') / (1 - ε'hₑ/H)
+ε' = 1 / (1 + (λ(1 - (hₑ/H))))
+λ = 0.4 / exp((ln(6εc)))
+\\\
+
+### 消力池计算（附录B.1）
+
+\\\
+T = hc + αq/(2ghc)
+h'c = hc/2(-1 + (1 + 8Frc))
+h''c = σ  h'c
+ΔE = (h''c - hc) / (4hch''c)
+Lⱼ = β(4.5h''c + p)
+\\\
+
+## 示例数据
+
+### A.0.1 示例
+- Q=120 m/s, H=8 m, H=10 m, h=5 m
+- b=3 m, b=3.5 m, N=1, m=0.885
+-  σ2.2929, ε0.9774, B3.7660 m
+
+### A.0.2 示例
+- Q=150 m/s, H=8 m, h=2 m, h=5 m, σ=0.82
+-  μ0.8776, B9.2107 m
+
+### A.0.3 示例
+- Q=180 m/s, H=9 m, H=10 m, hₑ=4 m, hc=1.5 m
+- εc=0.2, φ=0.96
+-  σ'0.1565, λ0.3869, ε'0.6369, μ1.1025, B10.2940 m
+
+## 技术栈
+
+- **Python**: 3.8+
+- **Web 框架**: Streamlit
+- **文档导出**: python-docx
+- **桌面 GUI**: tkinter (消力池)
+- **C# 版本**: .NET 8 + WPF (GateCalculator目录)
+
+## Streamlit Cloud 部署
+
+1. Fork 本仓库到你的 GitHub 账号
+2. 访问 [Streamlit Cloud](https://share.streamlit.io/)
+3. 使用 GitHub 账号登录
+4. 点击 "New app"
+5. 选择仓库、分支（main）和主文件（app.py）
+6. 点击 "Deploy"
+
+## 更新日志
+
+### v1.0.0 (2025-12-30)
+-  新增 Streamlit Web 版本
+-  整合闸孔净宽和消力池计算
+-  紫色主题UI设计
+-  完整的LaTeX公式显示
+-  保留tkinter和C#版本
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 许可
+
+MIT License
+
+## 联系方式
+
+- GitHub: [wmwyy/xlc](https://github.com/wmwyy/xlc)
+
+---
+
+ 如果这个项目对你有帮助，请给个 Star！
