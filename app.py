@@ -204,6 +204,61 @@ with col2:
             st.markdown("**弗劳德数：**")
             st.latex(r"Fr_c = \frac{v_c}{\sqrt{g h_c}}")
 
+        # Word导出
+        st.markdown("---")
+        st.markdown("### 📄 导出报告")
+        
+        if st.button("📥 下载 Word 报告", type="secondary", use_container_width=True):
+            try:
+                import tempfile
+                import os
+                from word_export import export_energy_basin_to_word
+                
+                # 准备结果数据
+                results_data = {
+                    'hc': result['hc'],
+                    'hc_double_prime': result['hc_prime_adj'],
+                    'delta_Z': result['delta_E'],
+                    'd': result['hc_prime_adj'] - result['hc'],
+                    'Lj': result['Lj'],
+                    'Lsj': result['Lsj'],
+                    'v': result['vc'],
+                    'Fr': result['Frc']
+                }
+                
+                # 创建临时文件
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
+                    output_path = export_energy_basin_to_word(
+                        results=results_data,
+                        output_path=tmp.name,
+                        project_name=st.session_state.project_name,
+                        input_params=st.session_state.input_params
+                    )
+                    
+                    # 读取文件内容
+                    with open(output_path, "rb") as f:
+                        docx_data = f.read()
+                    
+                    # 删除临时文件
+                    try:
+                        os.unlink(output_path)
+                    except:
+                        pass
+                    
+                    # 提供下载
+                    st.download_button(
+                        label="💾 点击下载 Word 文档",
+                        data=docx_data,
+                        file_name=f"{st.session_state.project_name}_消力池计算报告.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True
+                    )
+                    
+            except ImportError:
+                st.warning("⚠️ Word导出功能需要安装 python-docx 库")
+            except Exception as e:
+                st.error(f"❌ 导出失败：{str(e)}")
+
 # 页脚
 st.markdown("---")
 st.markdown(
