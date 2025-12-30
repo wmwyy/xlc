@@ -133,13 +133,23 @@ with col2:
                 hc_prime = hc_double_prime / sigma0  # 未校正值
                 hc_prime_adj = hc_double_prime
                 
+                # ΔZ: B.1.1-4公式
+                # ΔZ = αq²/(2gφ²h′s²) - αq²/(2gh″c²)
+                # 注：这里φ=p作为流速系数使用
+                phi = p if p > 0 else 1.0  # 流速系数
+                delta_Z = (alpha * q**2) / (2.0 * g * phi**2 * hs**2) - (alpha * q**2) / (2.0 * g * hc_double_prime**2)
+                
+                # 消力池深度 d: B.1.1-1公式
+                # d = σ₀h″c - h′s - ΔZ
+                d = sigma0 * hc_double_prime - hs - delta_Z
+                
                 # 消能: ΔE = (h''c - hc)^3 / (4*hc*h''c)
                 delta_E = ((hc_prime_adj - hc)**3) / (4.0 * hc * hc_prime_adj)
                 
                 # 水跃长度: Lⱼ = β * (4.5*h''c + p)
                 Lj = beta * (4.5 * hc_prime_adj + p)
                 
-                # 护坦长度: Lⱼ = Lⱼ + L
+                # 护坦长度: Lsj = Lj + Ls
                 Lsj = Lj + Ls
                 
                 # 保存到session_state
@@ -149,6 +159,9 @@ with col2:
                     'Frc': Frc,
                     'hc_prime': hc_prime,
                     'hc_prime_adj': hc_prime_adj,
+                    'hc_double_prime': hc_double_prime,
+                    'delta_Z': delta_Z,
+                    'd': d,
                     'delta_E': delta_E,
                     'Lj': Lj,
                     'Lsj': Lsj
@@ -174,18 +187,20 @@ with col2:
         col_a, col_b = st.columns(2)
         with col_a:
             st.metric("hc - 收缩水深", f"{result['hc']:.4f} m")
-            st.metric("h''c - 跃后水深", f"{result['hc_prime_adj']:.4f} m")
-            st.metric("ΔE - 消能", f"{result['delta_E']:.4f} m")
+            st.metric("h''c - 跃后水深", f"{result['hc_double_prime']:.4f} m")
+            st.metric("d - 消力池深度", f"{result['d']:.4f} m")
         with col_b:
             st.metric("Lⱼ - 水跃长度", f"{result['Lj']:.4f} m")
-            st.metric("Lⱼ - 护坦长度", f"{result['Lsj']:.4f} m")
+            st.metric("Lsj - 护坦长度", f"{result['Lsj']:.4f} m")
             st.metric("Frc - 弗劳德数", f"{result['Frc']:.4f}")
         
         with st.expander(" 查看详细参数", expanded=False):
             col_c, col_d = st.columns(2)
             with col_c:
                 st.metric("vc - 收缩流速", f"{result['vc']:.4f} m/s")
+                st.metric("ΔZ - 能量修正", f"{result['delta_Z']:.4f} m")
             with col_d:
+                st.metric("ΔE - 消能", f"{result['delta_E']:.4f} m")
                 st.metric("h'c - 跃后水深(未校正)", f"{result['hc_prime']:.4f} m")
         
         with st.expander(" 查看计算公式", expanded=False):
@@ -194,6 +209,12 @@ with col2:
             
             st.markdown("**跃后水深计算（B.1.1-2）：**")
             st.latex(r"h''_c = \frac{h_c}{2}\left(\sqrt{1 + \frac{8\alpha q^2}{gh_c^3}} - 1\right)\left(\frac{b_1}{b_2}\right)^{0.25}")
+            
+            st.markdown("**能量修正（B.1.1-4）：**")
+            st.latex(r"\Delta Z = \frac{\alpha q^2}{2g\varphi^2 h_s'^2} - \frac{\alpha q^2}{2gh_c''^2}")
+            
+            st.markdown("**消力池深度（B.1.1-1）：**")
+            st.latex(r"d = \sigma_0 h''_c - h'_s - \Delta Z")
             
             st.markdown("**消能计算：**")
             st.latex(r"\Delta E = \frac{(h''_c - h_c)^3}{4 h_c h''_c}")
@@ -220,9 +241,9 @@ with col2:
                 # 准备结果数据
                 results_data = {
                     'hc': result['hc'],
-                    'hc_double_prime': result['hc_prime_adj'],
-                    'delta_Z': result['delta_E'],
-                    'd': result['hc_prime_adj'] - result['hc'],
+                    'hc_double_prime': result['hc_double_prime'],
+                    'delta_Z': result['delta_Z'],
+                    'd': result['d'],
                     'Lj': result['Lj'],
                     'Lsj': result['Lsj'],
                     'v': result['vc'],
