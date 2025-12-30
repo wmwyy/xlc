@@ -123,11 +123,15 @@ with col2:
                 vc = q / hc  # 收缩流速
                 Frc = vc / math.sqrt(g * hc)  # 弗劳德数
                 
-                # 跃后水深（未校正）: h'c = hc/2 * (-1 + sqrt(1 + 8*Frc^2))
-                hc_prime = 0.5 * hc * (-1.0 + math.sqrt(1.0 + 8.0 * Frc**2))
+                # 跃后水深 h''c: B.1.1-2公式
+                # h''c = (hc/2) * (√(1 + 8αq²/(ghc³)) - 1) * (b₁/b₂)^0.25
+                width_ratio = (b1 / b2) ** 0.25
+                sqrt_term = math.sqrt(1.0 + 8.0 * alpha * q**2 / (g * hc**3))
+                hc_double_prime = (hc / 2.0) * (sqrt_term - 1.0) * width_ratio
                 
-                # 跃后水深（校正）: h''c = σ * h'c
-                hc_prime_adj = sigma0 * hc_prime
+                # 保持向后兼容的变量名
+                hc_prime = hc_double_prime / sigma0  # 未校正值
+                hc_prime_adj = hc_double_prime
                 
                 # 消能: ΔE = (h''c - hc)^3 / (4*hc*h''c)
                 delta_E = ((hc_prime_adj - hc)**3) / (4.0 * hc * hc_prime_adj)
@@ -188,9 +192,8 @@ with col2:
             st.markdown("**能量方程求解收缩水深：**")
             st.latex(r"T_0 = h_c + \frac{\alpha q^2}{2g h_c^2}")
             
-            st.markdown("**跃后水深计算：**")
-            st.latex(r"h'_c = \frac{h_c}{2}\left(-1 + \sqrt{1 + 8Fr_c^2}\right)")
-            st.latex(r"h''_c = \sigma_0 \cdot h'_c")
+            st.markdown("**跃后水深计算（B.1.1-2）：**")
+            st.latex(r"h''_c = \frac{h_c}{2}\left(\sqrt{1 + \frac{8\alpha q^2}{gh_c^3}} - 1\right)\left(\frac{b_1}{b_2}\right)^{0.25}")
             
             st.markdown("**消能计算：**")
             st.latex(r"\Delta E = \frac{(h''_c - h_c)^3}{4 h_c h''_c}")
@@ -258,6 +261,130 @@ with col2:
                 st.warning("⚠️ Word导出功能需要安装 python-docx 库")
             except Exception as e:
                 st.error(f"❌ 导出失败：{str(e)}")
+
+# 添加新的计算功能页面
+st.markdown("---")
+st.markdown("---")
+
+with st.expander(" B.1.3 消力池底板厚度计算", expanded=False):
+    st.markdown("### 消力池底板厚度计算")
+    
+    col_t1, col_t2 = st.columns([1, 1])
+    
+    with col_t1:
+        st.markdown("#### 输入参数")
+        q_t = st.number_input("q - 单宽流量 (m³/s/m)", min_value=0.01, value=10.0, step=0.5, key="q_t")
+        delta_H_t = st.number_input("ΔH' - 上下游水位差 (m)", min_value=0.01, value=5.0, step=0.1, key="dH_t")
+        U_t = st.number_input("U - 底面扬压力 (kPa)", min_value=0.0, value=50.0, step=1.0, key="U_t")
+        gamma_t = st.number_input("γ - 水重力密度 (kN/m³)", min_value=1.0, value=10.0, step=0.1, key="gamma_t")
+        hd_t = st.number_input("hd - 消力池内水深 (m)", min_value=0.01, value=3.0, step=0.1, key="hd_t")
+        Pm_t = st.number_input("Pm - 脉动压力 (kPa)", min_value=0.0, value=10.0, step=1.0, key="Pm_t")
+        gamma_b_t = st.number_input("γb - 底板饱和容重 (kN/m³)", min_value=1.0, value=24.0, step=0.1, key="gamma_b_t")
+        
+        col_k1, col_k2 = st.columns(2)
+        with col_k1:
+            k1_t = st.number_input("k₁ - 计算系数", min_value=0.1, value=0.175, step=0.005, format="%.3f", key="k1_t", help="0.15~0.20")
+        with col_k2:
+            k2_t = st.number_input("k₂ - 安全系数", min_value=0.1, value=1.2, step=0.1, key="k2_t", help="1.1~1.3")
+        
+        use_plus_t = st.radio("脉动压力符号", ["前半部（+）", "后半部（-）"], key="use_plus_t", horizontal=True)
+    
+    with col_t2:
+        st.markdown("#### 计算结果")
+        if st.button(" 计算厚度", key="calc_thickness", use_container_width=True):
+            try:
+                # B.1.3-1: 抗冲厚度
+                t_impact = k1_t * math.sqrt(q_t * math.sqrt(delta_H_t))
+                
+                # B.1.3-2: 抗浮厚度
+                if use_plus_t == "前半部（+）":
+                    t_float = k2_t * (U_t - gamma_t * hd_t + Pm_t) / gamma_b_t
+                else:
+                    t_float = k2_t * (U_t - gamma_t * hd_t - Pm_t) / gamma_b_t
+                
+                t_design = max(t_impact, t_float)
+                t_final = max(t_design, 0.5)
+                
+                st.session_state.thickness_result = {
+                    't_impact': t_impact,
+                    't_float': t_float,
+                    't_design': t_design,
+                    't_final': t_final
+                }
+                st.success(" 计算完成！")
+            except Exception as e:
+                st.error(f" 计算错误：{str(e)}")
+        
+        if "thickness_result" in st.session_state:
+            tr = st.session_state.thickness_result
+            st.metric("最终设计厚度", f"{tr['t_final']:.3f} m", help="≥0.5m")
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.metric("抗冲厚度", f"{tr['t_impact']:.3f} m")
+            with col_b:
+                st.metric("抗浮厚度", f"{tr['t_float']:.3f} m")
+            
+            with st.expander("查看公式"):
+                st.latex(r"t_{\text{抗冲}} = k_1\sqrt{q\sqrt{\Delta H'}}")
+                sign = "+" if use_plus_t == "前半部（+）" else "-"
+                st.latex(r"t_{\text{抗浮}} = k_2\frac{U - \gamma h_d " + sign + r" P_m}{\gamma_b}")
+
+with st.expander(" B.2.1 海漫长度计算", expanded=False):
+    st.markdown("### 海漫长度计算")
+    
+    col_m1, col_m2 = st.columns([1, 1])
+    
+    with col_m1:
+        st.markdown("#### 输入参数")
+        qs_m = st.number_input("qs - 消力池末端单宽流量 (m³/(s·m))", min_value=0.01, value=10.0, step=0.5, key="qs_m")
+        delta_H_m = st.number_input("ΔH' - 上下游水位差 (m)", min_value=0.01, value=5.0, step=0.1, key="dH_m")
+        
+        check_val = math.sqrt(qs_m * math.sqrt(delta_H_m))
+        if check_val < 1 or check_val > 9:
+            st.warning(f"⚠️ √(qs·√ΔH') = {check_val:.2f}，超出适用范围 [1, 9]")
+        else:
+            st.info(f"✓ √(qs·√ΔH') = {check_val:.2f}，在适用范围内")
+        
+        riverbed_type_m = st.selectbox(
+            "河床土质类型",
+            ["粉砂、细砂", "中砂、粗砂、粉质黏土", "粉质黏土", "坚硬黏土"],
+            key="riverbed_m"
+        )
+        
+        Ks_ranges = {
+            "粉砂、细砂": (14.0, 13.0),
+            "中砂、粗砂、粉质黏土": (12.0, 11.0),
+            "粉质黏土": (10.0, 9.0),
+            "坚硬黏土": (8.0, 7.0)
+        }
+        ks_min, ks_max = Ks_ranges[riverbed_type_m]
+        st.info(f"该土质 Ks 范围：{ks_max} ~ {ks_min}")
+        
+        Ks_m = st.number_input("Ks - 海漫长度计算系数", min_value=1.0, value=(ks_min + ks_max)/2, step=0.5, key="Ks_m")
+    
+    with col_m2:
+        st.markdown("#### 计算结果")
+        if st.button(" 计算海漫长度", key="calc_apron", use_container_width=True):
+            try:
+                # B.2.1: Lp = Ks·√(qs·√ΔH')
+                Lp = Ks_m * math.sqrt(qs_m * math.sqrt(delta_H_m))
+                
+                st.session_state.apron_result = {
+                    'Lp': Lp,
+                    'Ks': Ks_m
+                }
+                st.success(" 计算完成！")
+            except Exception as e:
+                st.error(f" 计算错误：{str(e)}")
+        
+        if "apron_result" in st.session_state:
+            ar = st.session_state.apron_result
+            st.metric("海漫长度 Lp", f"{ar['Lp']:.2f} m")
+            st.metric("使用的 Ks 值", f"{ar['Ks']:.2f}")
+            
+            with st.expander("查看公式"):
+                st.latex(r"L_p = K_s\sqrt{q_s\sqrt{\Delta H'}}")
+                st.markdown("**适用条件：** √(qs·√ΔH') = 1~9，且消能扩散良好")
 
 # 页脚
 st.markdown("---")
