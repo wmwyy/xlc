@@ -202,10 +202,32 @@ with col2:
             
             if os.path.exists(diagram_path):
                 st.image(diagram_path, caption="图 B.1.1 消力池结构示意图", use_container_width=True)
+                st.markdown("---")
             else:
-                st.warning("⚠️ 示意图文件未找到，请将图片保存为 `images/diagram_b11.png`")
-            
-            st.markdown("---")
+                # 备用文本图示
+                st.markdown("""
+                <div style="background-color: #1e1e1e; padding: 20px; border-radius: 5px; font-family: monospace; color: #d4d4d4; font-size: 12px; line-height: 1.6;">
+                <pre style="margin: 0;">
+    上游                                                      下游
+      ↓                                                        ↓
+    ════════════════════════════════════════════════════════════
+                       ╱╲
+            H ┐       ╱  ╲              T₀
+              │      ╱ 水  ╲            ↕
+            H₀┘     ╱  跃   ╲          ┌─┐
+    ────────────╱────────╲─────────┤ │ΔZ
+      v₀    →  │          │   h"c  │ │  ↕
+    ════════════════════════════════╧═╧══════════════════════════
+          │←  hc  →│                │              h's
+          │        │←─  Ls  ─→│←─── Lj ────→│      ↕
+          │←──────────── Lsj ──────────────→│    ══════════════
+                   d                                 河床
+                   ↕
+    ════════════════════════════════════════════════════════════
+                </pre>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("---")
             
             st.markdown("""
             **参数说明：**
