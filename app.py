@@ -146,10 +146,11 @@ with col2:
                 # 消能: ΔE = (h''c - hc)^3 / (4*hc*h''c)
                 delta_E = ((hc_prime_adj - hc)**3) / (4.0 * hc * hc_prime_adj)
                 
-                # 水跃长度: Lⱼ = β * (4.5*h''c + p)
-                Lj = beta * (4.5 * hc_prime_adj + p)
+                # 水跃长度: Lⱼ = 6.9(h″c - hc)
+                Lj = 6.9 * (hc_double_prime - hc)
                 
-                # 护坦长度: Lsj = Lj + Ls
+                # 护坦长度: Lsj = Ls + βLj
+                Lsj = Ls + beta * Lj
                 Lsj = Lj + Ls
                 
                 # 保存到session_state
@@ -220,10 +221,10 @@ with col2:
             st.latex(r"\Delta E = \frac{(h''_c - h_c)^3}{4 h_c h''_c}")
             
             st.markdown("**水跃长度：**")
-            st.latex(r"L_j = \beta(4.5h''_c + p)")
+            st.latex(r"L_j = 6.9(h''_c - h_c)")
             
             st.markdown("**护坦长度：**")
-            st.latex(r"L_{sj} = L_j + L_s")
+            st.latex(r"L_{sj} = L_s + \beta L_j")
             
             st.markdown("**弗劳德数：**")
             st.latex(r"Fr_c = \frac{v_c}{\sqrt{g h_c}}")
@@ -406,7 +407,66 @@ with st.expander(" B.2.1 海漫长度计算", expanded=False):
             with st.expander("查看公式"):
                 st.latex(r"L_p = K_s\sqrt{q_s\sqrt{\Delta H'}}")
                 st.markdown("**适用条件：** √(qs·√ΔH') = 1~9，且消能扩散良好")
-
+with st.expander(" B.3 河床冲刷深度计算", expanded=False):
+    st.markdown("### 河床冲刷深度计算")
+    
+    col_s1, col_s2 = st.columns([1, 1])
+    
+    with col_s1:
+        st.markdown("#### 输入参数")
+        
+        st.markdown("##### B.3.1 海漫末端冲刷深度")
+        qm_s1 = st.number_input("qm - 海漫末端单宽流量 (m³/(s·m))", min_value=0.01, value=10.0, step=0.5, key="qm_s1")
+        v0_s1 = st.number_input("[v0] - 河床土质允许不冲流速 (m/s)", min_value=0.01, value=2.0, step=0.1, key="v0_s1")
+        hm_s1 = st.number_input("hm - 海漫末端河床水深 (m)", min_value=0.01, value=3.0, step=0.1, key="hm_s1")
+        
+        st.markdown("---")
+        st.markdown("##### B.3.2 上游护底首端冲刷深度")
+        qm_s2 = st.number_input("q'm - 上游护底首端单宽流量 (m³/(s·m))", min_value=0.01, value=10.0, step=0.5, key="qm_s2")
+        v0_s2 = st.number_input("[v0] - 河床土质允许不冲流速 (m/s)", min_value=0.01, value=2.0, step=0.1, key="v0_s2")
+        hm_s2 = st.number_input("h'm - 上游护底首端河床水深 (m)", min_value=0.01, value=3.0, step=0.1, key="hm_s2")
+    
+    with col_s2:
+        st.markdown("#### 计算结果")
+        if st.button(" 计算冲刷深度", key="calc_scour", use_container_width=True):
+            try:
+                # B.3.1: 海漫末端河床冲刷深度
+                dm = 1.1 * (qm_s1 / v0_s1) - hm_s1
+                
+                # B.3.2: 上游护底首端河床冲刷深度
+                dm_prime = 0.8 * (qm_s2 / v0_s2) - hm_s2
+                
+                st.session_state.scour_result = {
+                    'dm': dm,
+                    'dm_prime': dm_prime,
+                    'qm_s1': qm_s1,
+                    'v0_s1': v0_s1,
+                    'hm_s1': hm_s1,
+                    'qm_s2': qm_s2,
+                    'v0_s2': v0_s2,
+                    'hm_s2': hm_s2
+                }
+                st.success(" 计算完成！")
+            except Exception as e:
+                st.error(f" 计算错误：{str(e)}")
+        
+        if "scour_result" in st.session_state:
+            sr = st.session_state.scour_result
+            
+            st.markdown("##### B.3.1 海漫末端冲刷")
+            st.metric("dm - 海漫末端冲刷深度", f"{sr['dm']:.3f} m")
+            
+            st.markdown("##### B.3.2 上游护底首端冲刷")
+            st.metric("d'm - 上游护底首端冲刷深度", f"{sr['dm_prime']:.3f} m")
+            
+            with st.expander("查看公式"):
+                st.markdown("**B.3.1 海漫末端河床冲刷深度：**")
+                st.latex(r"d_m = 1.1\frac{q_m}{[v_0]} - h_m")
+                st.markdown(f"计算：dm = 1.1 × ({sr['qm_s1']:.2f}/{sr['v0_s1']:.2f}) - {sr['hm_s1']:.2f} = {sr['dm']:.3f} m")
+                
+                st.markdown("**B.3.2 上游护底首端河床冲刷深度：**")
+                st.latex(r"d'_m = 0.8\frac{q_m}{[v_0]} - h'_m")
+                st.markdown(f"计算：d'm = 0.8 × ({sr['qm_s2']:.2f}/{sr['v0_s2']:.2f}) - {sr['hm_s2']:.2f} = {sr['dm_prime']:.3f} m")
 # 页脚
 st.markdown("---")
 st.markdown(
